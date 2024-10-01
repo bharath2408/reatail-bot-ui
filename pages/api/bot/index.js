@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from "uuid";
 const lexruntime = new LexRuntimeV2Client({
   region: "us-east-1",
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID, // Use environment variables
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, // Use environment variables
+    accessKeyId: process.env.ACCESS_KEY_ID, // Use environment variables
+    secretAccessKey: process.env.SECRET_ACCESS_KEY, // Use environment variables
   },
 });
 
