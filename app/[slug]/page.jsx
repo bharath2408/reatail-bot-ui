@@ -625,11 +625,11 @@ export default function Component({ params }) {
                       <li>
                         <strong>Height:</strong> {product?.height}
                       </li>
-                      <li>
+                      {/* <li>
                         <strong>Number of Speed Settings:</strong>{" "}
                         {product?.number_of_speed_settings}
-                      </li>
-                      <li>
+                      </li> */}
+                      {/* <li>
                         <strong>Packaging Type:</strong>{" "}
                         {product?.packaging_type}
                       </li>
@@ -700,7 +700,7 @@ export default function Component({ params }) {
                       <li>
                         <strong>What's Included:</strong>{" "}
                         {product?.what_included}
-                      </li>
+                      </li> */}
                     </ul>
                   </CardContent>
                   <CardFooter>
