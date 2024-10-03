@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { data } from "@/lib/data";
 import axios from "axios";
 import clsx from "clsx";
 import {
@@ -47,14 +48,14 @@ const predefinedQuestions = [
   "What is the estimated delivery time?",
 ];
 
-const images = [
-  "https://cdn-tp3.mozu.com/24645-37138/cms/37138/files/1655a59c-3609-440a-9465-eb13cb9a8bb3?quality=60&_mzcb=_1703879152693",
-  "https://cdn-tp3.mozu.com/24645-37138/cms/37138/files/47430b4e-1624-40a0-9925-fe3d06f6ad4d?quality=60&_mzcb=_1703879152693",
-  "https://cdn-tp3.mozu.com/24645-37138/cms/37138/files/b59cc7f7-29c3-4f94-b891-a5821e52603a?quality=60&_mzcb=_1703879152693",
-  "https://cdn-tp3.mozu.com/24645-37138/cms/37138/files/7a3df487-5a3d-430b-aa96-629acf699935?quality=60&_mzcb=_1703879152693",
-];
+// const images = [
+//   "https://cdn-tp3.mozu.com/24645-37138/cms/37138/files/1655a59c-3609-440a-9465-eb13cb9a8bb3?quality=60&_mzcb=_1703879152693",
+//   "https://cdn-tp3.mozu.com/24645-37138/cms/37138/files/47430b4e-1624-40a0-9925-fe3d06f6ad4d?quality=60&_mzcb=_1703879152693",
+//   "https://cdn-tp3.mozu.com/24645-37138/cms/37138/files/b59cc7f7-29c3-4f94-b891-a5821e52603a?quality=60&_mzcb=_1703879152693",
+//   "https://cdn-tp3.mozu.com/24645-37138/cms/37138/files/7a3df487-5a3d-430b-aa96-629acf699935?quality=60&_mzcb=_1703879152693",
+// ];
 
-export default function Component() {
+export default function Component({ params }) {
   const [quantity, setQuantity] = useState(1);
   const [messages, setMessages] = useState([
     {
@@ -65,7 +66,15 @@ export default function Component() {
   ]);
   const [buttons, setButtons] = useState([]);
 
-  const [currentImage, setCurrentImage] = useState(images[0]);
+  const getProductdetails = () => {
+    return data?.filter((item) => item?.item_number == params?.slug);
+  };
+
+  const productDetails = getProductdetails();
+  console.log(productDetails);
+  const [currentImage, setCurrentImage] = useState(
+    productDetails?.[0]?.images_url?.[0]
+  );
   const [sliderIndex, setSliderIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -76,16 +85,22 @@ export default function Component() {
 
   const handlePrevious = () => {
     setSliderIndex((prevIndex) => {
-      const newIndex = prevIndex > 0 ? prevIndex - 1 : images.length - 1;
-      setCurrentImage(images[newIndex]);
+      const newIndex =
+        prevIndex > 0
+          ? prevIndex - 1
+          : productDetails?.[0]?.images_url?.length - 1;
+      setCurrentImage(productDetails?.[0]?.images_url[newIndex]);
       return newIndex;
     });
   };
 
   const handleNext = () => {
     setSliderIndex((prevIndex) => {
-      const newIndex = prevIndex < images.length - 1 ? prevIndex + 1 : 0;
-      setCurrentImage(images[newIndex]);
+      const newIndex =
+        prevIndex < productDetails?.[0]?.images_url?.length - 1
+          ? prevIndex + 1
+          : 0;
+      setCurrentImage(productDetails?.[0]?.images_url[newIndex]);
       return newIndex;
     });
   };
@@ -234,6 +249,16 @@ export default function Component() {
   //   }
   // }, []);
 
+  const formatKey = (key) => {
+    return key
+      .replace(/_/g, " ") // Replace underscores with spaces
+      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize the first letter of each word
+  };
+
+  if (!productDetails) {
+    return <div>Loading...</div>; // Show a loading state while data is being fetched
+  }
+
   return (
     <>
       <Head>
@@ -273,22 +298,26 @@ export default function Component() {
                   </button>
                   <ScrollArea className="w-full">
                     <div className="flex space-x-2 py-2 px-8">
-                      {images.map((image, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleImageClick(image, index)}
-                          className={`flex-shrink-0 ${
-                            index === sliderIndex ? "ring-2 ring-blue-500" : ""
-                          }`}
-                        >
-                          <Image
-                            src={image}
-                            alt={`Product thumbnail ${index + 1}`}
-                            width={80}
-                            height={80}
-                            className="object-cover rounded-md"
-                          />
-                        </button>
+                      {productDetails?.[0].images_url?.map((image, index) => (
+                        <>
+                          <button
+                            key={index}
+                            onClick={() => handleImageClick(image, index)}
+                            className={`flex-shrink-0 ${
+                              index === sliderIndex
+                                ? "ring-2 ring-blue-500"
+                                : ""
+                            }`}
+                          >
+                            <Image
+                              src={image}
+                              alt={`Product thumbnail ${index + 1}`}
+                              width={80}
+                              height={80}
+                              className="object-cover rounded-md"
+                            />
+                          </button>
+                        </>
                       ))}
                     </div>
                   </ScrollArea>
@@ -425,184 +454,263 @@ export default function Component() {
             </div>
 
             {/* Right column: Product Details and Specifications */}
-            <div className="lg:w-1/2 mt-8 lg:mt-0 space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-600 dark:text-blue-200">
-                  Perfect Aire 5000 BTU 115 V Window Air Conditioner 100-150 sq
-                  ft
-                </h1>
-                <p className="text-sm font-light tracking-wider text-gray-600 dark:text-gray-400">
-                  Item # 4360475 | Mfr # 5PMC5000
-                </p>
-                <div className="flex items-center space-x-1 mt-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-5 h-5 ${
-                        i < 4
-                          ? "text-[#d40029] fill-[#d40029]"
-                          : "text-gray-300 dark:text-gray-600"
-                      }`}
-                    />
-                  ))}
-                  <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
-                    (4.0)
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <p className="relative text-3xl font-bold mb-2 text-[#121212ed] dark:text-blue-300">
-                  <span className="absolute -top-4 left-0 right-0 text-sm text-[#121212a8]">
-                    Price
-                  </span>{" "}
-                  $179.99
-                </p>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Keep your cool when the weather heats up with this window air
-                  conditioner from Perfect Aire. Reliable and efficient, it
-                  adapts to your comfort zone. How refreshing is that? Whether
-                  it's for your home office or the kids' playroom, this 5,000
-                  BTU unit is the ideal size for cooling smaller spaces up to
-                  150 square feet.
-                </p>
-                <div className="flex flex-wrap gap-4 mb-4">
-                  <div className="flex items-center gap-4">
-                    <Label htmlFor="quantity" className="text-sm font-medium">
-                      Quantity:
-                    </Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      min="1"
-                      value={quantity}
-                      onChange={handleQuantityChange}
-                      className="w-20"
-                    />
+            {productDetails?.map((product, index) => (
+              <div className="lg:w-1/2 mt-8 lg:mt-0 space-y-6">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-600 dark:text-blue-200">
+                    {product?.title}
+                  </h1>
+                  <p className="text-sm font-light tracking-wider text-gray-600 dark:text-gray-400">
+                    Item # {product?.item_number} | Mfr # {product?.mfr_number}
+                  </p>
+                  <div className="flex items-center space-x-1 mt-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-5 h-5 ${
+                          i < 4
+                            ? "text-[#d40029] fill-[#d40029]"
+                            : "text-gray-300 dark:text-gray-600"
+                        }`}
+                      />
+                    ))}
+                    <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
+                      (4.0)
+                    </span>
                   </div>
-                  <Button className="bg-[#d40029] hover:bg-[#d40029] text-white transition-all duration-300 transform hover:scale-105">
-                    <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-blue-400 text-blue-600 hover:bg-blue-100 dark:border-blue-500 dark:text-blue-300 dark:hover:bg-blue-900 transition-all duration-300 transform hover:scale-105"
-                  >
-                    <Heart className="mr-2 h-4 w-4" /> Save for Later
-                  </Button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                  >
-                    Adjustable Thermostat
-                  </Badge>
-                  <Badge
-                    variant="secondary"
-                    className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                  >
-                    Eco-Friendly
-                  </Badge>
-                  <Badge
-                    variant="secondary"
-                    className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
-                  >
-                    Machine Washable
-                  </Badge>
-                </div>
-              </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <TruckIcon className="h-6 w-6" />
-                      <span>Shipping Information</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">
-                            Estimated Delivery Date
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {shippingInfo.date}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPinIcon className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">Shipping To</p>
-                          <p className="text-sm text-muted-foreground">
-                            {shippingInfo.location}
-                          </p>
-                        </div>
-                      </div>
+                <div>
+                  <p className="relative text-3xl font-bold mb-2 text-[#121212ed] dark:text-blue-300">
+                    <span className="absolute -top-4 left-0 right-0 text-sm text-[#121212a8]">
+                      Price
+                    </span>{" "}
+                    {product?.price}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    {product?.overview}
+                  </p>
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    <div className="flex items-center gap-4">
+                      <Label htmlFor="quantity" className="text-sm font-medium">
+                        Quantity:
+                      </Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={handleQuantityChange}
+                        className="w-20"
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-                <Card>
+                    <Button className="bg-[#d40029] hover:bg-[#d40029] text-white transition-all duration-300 transform hover:scale-105">
+                      <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-blue-400 text-blue-600 hover:bg-blue-100 dark:border-blue-500 dark:text-blue-300 dark:hover:bg-blue-900 transition-all duration-300 transform hover:scale-105"
+                    >
+                      <Heart className="mr-2 h-4 w-4" /> Save for Later
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                    >
+                      Adjustable Thermostat
+                    </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                    >
+                      Eco-Friendly
+                    </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
+                    >
+                      Machine Washable
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <TruckIcon className="h-6 w-6" />
+                        <span>Shipping Information</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium">
+                              Estimated Delivery Date
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {shippingInfo.date}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <MapPinIcon className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium">Shipping To</p>
+                            <p className="text-sm text-muted-foreground">
+                              {shippingInfo.location}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ArrowLeftRight className="h-5 w-5" />
+                        Return Policy
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="list-disc pl-5 space-y-2 text-sm">
+                        <li>30-day return window</li>
+                        <li>Items must be unused and in original packaging</li>
+                        <li>Free returns on eligible items</li>
+                        <li>Refund processed within 5-7 business days</li>
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      <Button variant="outline" className="w-full">
+                        View Full Policy
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </div>
+
+                <Card className="">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ArrowLeftRight className="h-5 w-5" />
-                      Return Policy
+                    <CardTitle className="text-md flex items-center gap-2">
+                      Specifications
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="list-disc pl-5 space-y-2 text-sm">
-                      <li>30-day return window</li>
-                      <li>Items must be unused and in original packaging</li>
-                      <li>Free returns on eligible items</li>
-                      <li>Refund processed within 5-7 business days</li>
+                      <li>
+                        <strong>Brand Name:</strong> {product?.brand_name}
+                      </li>
+                      <li>
+                        <strong>Product Type:</strong> {product?.product_type}
+                      </li>
+                      <li>
+                        <strong>Air Volume:</strong> {product?.air_volume}
+                      </li>
+                      <li>
+                        <strong>Color:</strong> {product?.color}
+                      </li>
+                      <li>
+                        <strong>Commercial or Residential:</strong>{" "}
+                        {product?.commercial_or_residential}
+                      </li>
+                      <li>
+                        <strong>Depth:</strong> {product?.depth}
+                      </li>
+                      <li>
+                        <strong>ETL Listed:</strong> {product?.etl_listed}
+                      </li>
+                      <li>
+                        <strong>Height:</strong> {product?.height}
+                      </li>
+                      <li>
+                        <strong>Number of Speed Settings:</strong>{" "}
+                        {product?.number_of_speed_settings}
+                      </li>
+                      <li>
+                        <strong>Packaging Type:</strong>{" "}
+                        {product?.packaging_type}
+                      </li>
+                      <li>
+                        <strong>Portable:</strong> {product?.portable}
+                      </li>
+                      <li>
+                        <strong>Remote Control:</strong>{" "}
+                        {product?.remote_control}
+                      </li>
+                      <li>
+                        <strong>UL Listed:</strong> {product?.ul_listed}
+                      </li>
+                      <li>
+                        <strong>Volts:</strong> {product?.volts}
+                      </li>
+                      <li>
+                        <strong>Warranty:</strong> {product?.warranty}
+                      </li>
+                      <li>
+                        <strong>Width:</strong> {product?.width}
+                      </li>
+                      <li>
+                        <strong>Sub Brand:</strong> {product?.sub_brand}
+                      </li>
+                      <li>
+                        <strong>Amps:</strong> {product?.amps}
+                      </li>
+                      <li>
+                        <strong>Bluetooth:</strong> {product?.bluetooth}
+                      </li>
+                      <li>
+                        <strong>CARB Compliant:</strong>{" "}
+                        {product?.carb_compliant}
+                      </li>
+                      <li>
+                        <strong>Low Oil Shutdown:</strong>{" "}
+                        {product?.low_oil_shutdown}
+                      </li>
+                      <li>
+                        <strong>Wheel Kit Included:</strong>{" "}
+                        {product?.wheel_kit_included}
+                      </li>
+                      <li>
+                        <strong>Powered By:</strong> {product?.powered_by}
+                      </li>
+                      <li>
+                        <strong>Running Watts:</strong> {product?.running_watts}
+                      </li>
+                      <li>
+                        <strong>Starting Watts:</strong>{" "}
+                        {product?.starting_watts}
+                      </li>
+                      <li>
+                        <strong>CO Shutdown:</strong> {product?.co_shutdown}
+                      </li>
+                      <li>
+                        <strong>Generator Type:</strong>{" "}
+                        {product?.generator_type}
+                      </li>
+                      <li>
+                        <strong>Kit or Tool Only:</strong>{" "}
+                        {product?.kit_or_tool_only}
+                      </li>
+                      <li>
+                        <strong>Inverter:</strong> {product?.inverter}
+                      </li>
+                      <li>
+                        <strong>What's Included:</strong>{" "}
+                        {product?.what_included}
+                      </li>
                     </ul>
                   </CardContent>
                   <CardFooter>
                     <Button variant="outline" className="w-full">
-                      View Full Policy
+                      View More
                     </Button>
                   </CardFooter>
                 </Card>
               </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-md flex items-center gap-2">
-                    Specifications
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="list-disc pl-5 space-y-2 text-sm">
-                    <li>
-                      <strong>Brand Name:</strong> Perfect Aire
-                    </li>
-                    <li>
-                      <strong>Product Type:</strong> Window Air Conditioner
-                    </li>
-                    <li>
-                      <strong>BTUs:</strong> 5000 British thermal units
-                    </li>
-                    <li>
-                      <strong>Coverage Area:</strong> 100-150 square foot
-                    </li>
-                    <li>
-                      <strong>Energy Efficiency Ratio:</strong> 11.1
-                    </li>
-                    <li>
-                      <strong>Dimensions:</strong> 16" W x 13.25" D x 12.25" H
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    View More
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
+            ))}
           </div>
         </div>
         <ChatbotBubble />

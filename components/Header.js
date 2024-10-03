@@ -51,7 +51,7 @@ const Header = () => {
         </div>
 
         <div className="px-4 text-sm shadow-md bg-[#d40029] fixed w-full h-8 flex items-center gap-2 text-white">
-          <div>Top Brands</div>
+          {/* <div>Top Brands</div> */}
         </div>
       </header>
     </>
