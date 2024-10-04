@@ -6,16 +6,24 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { data } from "@/lib/data";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 import axios from "axios";
 import clsx from "clsx";
+import { motion } from "framer-motion";
 import {
   ArrowLeftRight,
   BotMessageSquare,
@@ -36,6 +44,8 @@ import {
 } from "lucide-react";
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import InnerImageZoom from "react-inner-image-zoom";
 import "react-inner-image-zoom/lib/InnerImageZoom/styles.min.css";
@@ -56,6 +66,7 @@ const predefinedQuestions = [
 // ];
 
 export default function Component({ params }) {
+  const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [messages, setMessages] = useState([
     {
@@ -71,7 +82,7 @@ export default function Component({ params }) {
   };
 
   const productDetails = getProductdetails();
-  console.log(productDetails);
+
   const [currentImage, setCurrentImage] = useState(
     productDetails?.[0]?.images_url?.[0]
   );
@@ -128,66 +139,190 @@ export default function Component({ params }) {
     setIsTyping(true);
     // scrollToBottom();
 
+    setLoading(true);
     try {
-      setLoading(true);
-      const result = await axios.post("/api/bot", {
-        userInput: id.toString(),
-      });
-
-      const responseString = result?.data?.botResponses?.[0];
-      // Find the starting point of the JSON array (the first '[' character)
-      const jsonArrayString = responseString.slice(
-        0,
-        responseString.indexOf("[")
+      // Make the POST request using axios
+      const response = await axios.post(
+        "https://f2zrmrxfe7.execute-api.us-east-1.amazonaws.com/lang_graph/LangGraph",
+        {
+          payload: {
+            part_number: { current_product: params?.slug },
+            messages: params?.slug,
+          },
+        }
       );
 
-      let index = 0;
+      if (response.status === 200) {
+        const parsedResponse = JSON.parse(response.data?.body);
+        let outputString = parsedResponse.output;
 
-      const typingInterval = setInterval(() => {
-        if (index < jsonArrayString?.length) {
-          setLoading(false);
-          setCurrentTypingText((prev) => prev + jsonArrayString[index]);
-          index++;
-        } else {
-          setLoading(false);
-          clearInterval(typingInterval);
-          setIsTyping(false);
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              text: jsonArrayString,
-              isBot: true,
-              id: Date.now(),
-            },
-          ]);
+        // Step 2: Replace single quotes with double quotes to make it valid JSON
+        outputString = outputString.replace(/'/g, '"');
 
-          setCurrentTypingText("");
+        outputString = outputString.replace(/HumanMessage\(.*?\)/g, "");
+
+        outputString = outputString.replace(/\"s/g, "'s");
+
+        let result;
+
+        result = JSON.parse(outputString);
+
+        // Step 4: Extract the FAQs
+        const faqs = result?.faqs || [];
+        // Set the button data from the response
+        // Assuming the API returns `faqs` in the response data
+
+        const filteredQuestions = faqs?.filter(
+          (q) => q.question.toLowerCase() === question.toLowerCase()
+        )?.[0]?.answer;
+
+        if (filteredQuestions) {
+          let index = 0;
+          const typingInterval = setInterval(() => {
+            if (index < filteredQuestions?.length) {
+              setLoading(false);
+              const currentChar = filteredQuestions.charAt(index);
+              setCurrentTypingText((prev) => {
+                const updatedText = prev + currentChar;
+
+                return updatedText;
+              });
+
+              index++;
+            } else {
+              setLoading(false);
+              clearInterval(typingInterval);
+              setIsTyping(false);
+              setMessages((prevMessages) => [
+                ...prevMessages,
+                {
+                  text: filteredQuestions,
+                  isBot: true,
+                  id: Date.now(),
+                },
+              ]);
+
+              setCurrentTypingText("");
+            }
+          }, 40);
         }
-      }, 40);
-    } catch (err) {
-      let index = 0;
-      const apiResponse = "Sorry, I couldn't process your request.";
-      const typingInterval = setInterval(() => {
-        if (index < apiResponse?.length) {
-          setLoading(false);
-          setCurrentTypingText((prev) => prev + apiResponse[index]);
-          index++;
-        } else {
-          setLoading(false);
-          clearInterval(typingInterval);
-          setIsTyping(false);
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              text: apiResponse,
-              isBot: true,
-              id: Date.now(),
-            },
-          ]);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
 
-          setCurrentTypingText("");
+  const handleTypeMessage = async (usertext) => {
+    const newUserMessage = {
+      text: usertext,
+      isBot: false,
+      id: Date.now(),
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    setInputText("");
+    setIsTyping(true);
+    // scrollToBottom();
+
+    setLoading(true);
+    try {
+      // Make the POST request using axios
+      const response = await axios.post(
+        "https://f2zrmrxfe7.execute-api.us-east-1.amazonaws.com/lang_graph/LangGraph",
+        {
+          payload: {
+            part_number: { current_product: params?.slug },
+            messages: usertext,
+          },
         }
-      }, 30); // Store any error that occurs during the request
+      );
+
+      if (response.status === 200) {
+        const parsedResponse = JSON.parse(response.data?.body);
+        if (parsedResponse.status === "error") {
+          let outputString = parsedResponse.output;
+
+          // Step 2: Replace single quotes with double quotes to make it valid JSON
+          outputString = outputString.replace(/'/g, '"');
+
+          console.log(outputString);
+
+          if (outputString) {
+            let index = 0;
+            const typingInterval = setInterval(() => {
+              if (index < outputString?.length) {
+                setLoading(false);
+                const currentChar = outputString?.charAt(index);
+                setCurrentTypingText((prev) => {
+                  const updatedText = prev + currentChar;
+                  return updatedText;
+                });
+
+                index++;
+              } else {
+                setLoading(false);
+                clearInterval(typingInterval);
+                setIsTyping(false);
+                setMessages((prevMessages) => [
+                  ...prevMessages,
+                  {
+                    text: outputString,
+                    suggestion: [],
+                    isBot: true,
+                    id: Date.now(),
+                  },
+                ]);
+
+                setCurrentTypingText("");
+              }
+            }, 40);
+          }
+        } else {
+          let outputString = parsedResponse.output;
+
+          // Step 2: Replace single quotes with double quotes to make it valid JSON
+          outputString = outputString.replace(/'/g, '"');
+
+          outputString = outputString.replace(/HumanMessage\(.*?\)/g, "");
+
+          let result;
+
+          result = JSON.parse(outputString);
+
+          if (result?.question || result?.suggestion) {
+            let index = 0;
+            const typingInterval = setInterval(() => {
+              if (index < result?.question?.length) {
+                setLoading(false);
+                const currentChar = result?.question?.charAt(index);
+                setCurrentTypingText((prev) => {
+                  const updatedText = prev + currentChar;
+                  return updatedText;
+                });
+
+                index++;
+              } else {
+                setLoading(false);
+                clearInterval(typingInterval);
+                setIsTyping(false);
+                setMessages((prevMessages) => [
+                  ...prevMessages,
+                  {
+                    text: result?.question,
+                    suggestion: result?.suggestion,
+                    isBot: true,
+                    id: Date.now(),
+                  },
+                ]);
+
+                setCurrentTypingText("");
+              }
+            }, 40);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
   };
 
@@ -214,20 +349,45 @@ export default function Component({ params }) {
   };
 
   useEffect(() => {
-    const postData = async () => {
+    const fetchStream = async () => {
       try {
-        const result = await axios.post("/api/bot", {
-          userInput: "123",
-        });
+        // Make the POST request using axios
+        const response = await axios.post(
+          "https://f2zrmrxfe7.execute-api.us-east-1.amazonaws.com/lang_graph/LangGraph",
+          {
+            payload: {
+              part_number: { current_product: params?.slug },
+              messages: params?.slug,
+            },
+          }
+        );
 
-        console.log(JSON.parse(result.data?.botResponses?.[0]));
-        setButtons(JSON.parse(result.data?.botResponses?.[0])); // Store the API response data
-      } catch (err) {
-        console.log(err.message); // Store any error that occurs during the request
+        if (response.status === 200) {
+          const parsedResponse = JSON.parse(response.data?.body);
+          let outputString = parsedResponse.output;
+
+          // Step 2: Replace single quotes with double quotes to make it valid JSON
+          outputString = outputString.replace(/'/g, '"');
+
+          outputString = outputString.replace(/HumanMessage\(.*?\)/g, "");
+
+          outputString = outputString.replace(/\"s/g, "'s");
+
+          let result;
+
+          result = JSON.parse(outputString);
+
+          // Step 4: Extract the FAQs
+          const faqs = result?.faqs || [];
+          // Set the button data from the response
+          setButtons(faqs); // Assuming the API returns `faqs` in the response data
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
     };
 
-    postData();
+    fetchStream();
   }, []);
 
   // useEffect(() => {
@@ -269,7 +429,7 @@ export default function Component({ params }) {
         ></script>
       </Head>
 
-      <div className="min-w-screen min-h-screen mt-40 px-4 sm:px-6 lg:px-8">
+      <div className="min-w-screen min-h-screen mt-40 p-4">
         <div className="max-w-7xl mx-auto">
           <div className="lg:flex lg:items-start lg:space-x-8">
             {/* Left column: Images and Chat */}
@@ -298,7 +458,7 @@ export default function Component({ params }) {
                   </button>
                   <ScrollArea className="w-full">
                     <div className="flex space-x-2 py-2 px-8">
-                      {productDetails?.[0].images_url?.map((image, index) => (
+                      {productDetails?.[0]?.images_url?.map((image, index) => (
                         <>
                           <button
                             key={index}
@@ -339,7 +499,7 @@ export default function Component({ params }) {
                 </div>
                 <div className="w-full space-y-4">
                   <ScrollArea
-                    className="h-[200px] w-full border border-gray-300 rounded-md p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
+                    className="h-[300px] w-full border border-gray-300 rounded-md p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
                     ref={scrollAreaRef}
                   >
                     {messages.map((message) => (
@@ -350,7 +510,7 @@ export default function Component({ params }) {
                         } mb-4`}
                       >
                         <div
-                          className={`flex items-end ${
+                          className={`flex items-start ${
                             message.isBot ? "flex-row" : "flex-row-reverse"
                           }`}
                         >
@@ -382,14 +542,64 @@ export default function Component({ params }) {
                                 : "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
                             } shadow-md`}
                           >
-                            {message.text}
+                            {message?.text}
+                            {message?.suggestion && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 p-1">
+                                {message?.suggestion?.map((product, index) => (
+                                  <motion.div
+                                    key={product.item_number}
+                                    whileHover={{ scale: 1.1 }} // Hover effect to enlarge the card
+                                    initial={{ opacity: 0, y: 50 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="flex justify-end"
+                                  >
+                                    <Card className="bg-blue-500 rounded-md shadow-md text-white h-full flex flex-col overflow-hidden">
+                                      <CardHeader className="p-2">
+                                        <CardTitle className="text-xs font-bold truncate ">
+                                          {product.name
+                                            .charAt(0)
+                                            .toUpperCase() +
+                                            product.name.slice(1)}
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent className="p-2 pt-0 flex-grow">
+                                        <CardDescription className="text-white text-xs">
+                                          <span className="font-bold">
+                                            Item No :{" "}
+                                          </span>
+                                          {product.item_number}
+                                          <br />
+                                          <p className="text-xs font-medium line-clamp-3 h-auto">
+                                            <span className="font-bold">
+                                              {" "}
+                                              overview :{" "}
+                                            </span>
+                                            {product.overview}
+                                          </p>
+                                        </CardDescription>
+                                      </CardContent>
+                                      <CardFooter className="p-2 pt-0">
+                                        <Link
+                                          target="_blank"
+                                          href={`/${product.item_number}`}
+                                          className="text-xs text-white hover:text-white transition-colors hover:underline"
+                                        >
+                                          View Details
+                                        </Link>
+                                      </CardFooter>
+                                    </Card>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
                     ))}
                     {isTyping && (
                       <div className="flex justify-start mb-4">
-                        <div className="flex items-end">
+                        <div className="flex items-start">
                           <Avatar className="w-8 h-8 mr-2">
                             <AvatarImage src="/placeholder.svg?height=32&width=32" />
                             <AvatarFallback className="text-sm bg-[#d40029] text-white">
@@ -400,10 +610,7 @@ export default function Component({ params }) {
                             {loading ? (
                               <ThreeDotLoader />
                             ) : (
-                              <>
-                                {currentTypingText}
-                                <span className="typing-cursor">|</span>
-                              </>
+                              <>{currentTypingText}</>
                             )}
                           </div>
                         </div>
@@ -416,7 +623,7 @@ export default function Component({ params }) {
                       <Button
                         key={index}
                         variant="outline"
-                        disabled={loading}
+                        disabled={loading || isTyping}
                         size="sm"
                         onClick={() =>
                           handleSendMessage(btn?.id, btn?.question)
@@ -430,7 +637,7 @@ export default function Component({ params }) {
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      handleSendMessage(inputText);
+                      handleTypeMessage(inputText);
                     }}
                     className="flex space-x-2"
                   >
@@ -443,7 +650,7 @@ export default function Component({ params }) {
                     />
                     <Button
                       type="submit"
-                      disabled={loading}
+                      disabled={loading || isTyping}
                       className="bg-[#d40029] hover:bg-[#d40029] text-white transition-all duration-300 transform hover:scale-105"
                     >
                       <Send className="h-5 w-5" />
@@ -592,7 +799,7 @@ export default function Component({ params }) {
                   </Card>
                 </div>
 
-                <Card className="">
+                {/* <Card className="">
                   <CardHeader>
                     <CardTitle className="text-md flex items-center gap-2">
                       Specifications
@@ -628,8 +835,8 @@ export default function Component({ params }) {
                       {/* <li>
                         <strong>Number of Speed Settings:</strong>{" "}
                         {product?.number_of_speed_settings}
-                      </li> */}
-                      {/* <li>
+                      </li> 
+                      <li>
                         <strong>Packaging Type:</strong>{" "}
                         {product?.packaging_type}
                       </li>
@@ -700,7 +907,7 @@ export default function Component({ params }) {
                       <li>
                         <strong>What's Included:</strong>{" "}
                         {product?.what_included}
-                      </li> */}
+                      </li>
                     </ul>
                   </CardContent>
                   <CardFooter>
@@ -708,7 +915,7 @@ export default function Component({ params }) {
                       View More
                     </Button>
                   </CardFooter>
-                </Card>
+                </Card> */}
               </div>
             ))}
           </div>
