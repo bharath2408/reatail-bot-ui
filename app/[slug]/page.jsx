@@ -245,8 +245,6 @@ export default function Component({ params }) {
           // Step 2: Replace single quotes with double quotes to make it valid JSON
           outputString = outputString.replace(/'/g, '"');
 
-          console.log(outputString);
-
           if (outputString) {
             let index = 0;
             const typingInterval = setInterval(() => {
@@ -267,7 +265,6 @@ export default function Component({ params }) {
                   ...prevMessages,
                   {
                     text: outputString,
-                    suggestion: [],
                     isBot: true,
                     id: Date.now(),
                   },
