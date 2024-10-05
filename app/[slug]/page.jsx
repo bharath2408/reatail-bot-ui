@@ -132,7 +132,10 @@ export default function Component({ params }) {
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
       // Scroll the chat container to the bottom
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: "smooth", // Enables smooth scrolling
+      });
     }
   };
 
