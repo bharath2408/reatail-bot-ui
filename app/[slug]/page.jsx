@@ -26,12 +26,14 @@ import clsx from "clsx";
 import { motion } from "framer-motion";
 import {
   ArrowLeftRight,
+  ArrowUp,
   BotMessageSquare,
   CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Circle,
   Ellipsis,
+  Expand,
   ExternalLink,
   Heart,
   Info,
@@ -39,6 +41,7 @@ import {
   MessageCircle,
   Send,
   ShoppingCart,
+  Shrink,
   Sparkles,
   Star,
   Tag,
@@ -71,6 +74,7 @@ const predefinedQuestions = [
 export default function Component({ params }) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [botExpand, setBotExpand] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [messages, setMessages] = useState([
     {
@@ -126,7 +130,10 @@ export default function Component({ params }) {
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollAreaRef.current) {
+      // Scroll the chat container to the bottom
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
   };
 
   const handleSendMessage = async (id, question) => {
@@ -340,7 +347,7 @@ export default function Component({ params }) {
 
       return () => clearTimeout(timer);
     }
-  }, [messages]);
+  }, [messages, isTyping]);
 
   const shippingInfo = {
     date: "2023-09-28",
@@ -430,7 +437,12 @@ export default function Component({ params }) {
         <div className="max-w-8xl mx-auto">
           <div className="lg:flex lg:items-start lg:space-x-8">
             {/* Left column: Images and Chat */}
-            <div className="lg:w-1/2 space-y-4">
+            <div
+              className={clsx("transition-all duration-500 space-y-4", {
+                "lg:w-1/2": !botExpand,
+                "lg:w-11/12": botExpand,
+              })}
+            >
               {/* Product Images */}
               <div className="">
                 <div className="w-full h-[300px] sm:h-[400px] lg:h-[400px] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
@@ -445,58 +457,84 @@ export default function Component({ params }) {
                     // moveType="pan"
                   />
                 </div>
-                <div className="relative mt-4">
-                  <button
-                    onClick={handlePrevious}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md z-10"
-                    aria-label="Previous image"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <ScrollArea className="w-full">
-                    <div className="flex space-x-2 py-2 px-8">
-                      {productDetails?.[0]?.images_url?.map((image, index) => (
-                        <>
-                          <button
-                            key={index}
-                            onClick={() => handleImageClick(image, index)}
-                            className={`flex-shrink-0 ${
-                              index === sliderIndex
-                                ? "ring-2 ring-blue-500"
-                                : ""
-                            }`}
-                          >
-                            <Image
-                              src={image}
-                              alt={`Product thumbnail ${index + 1}`}
-                              width={80}
-                              height={80}
-                              className="object-cover rounded-md"
-                            />
-                          </button>
-                        </>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                  <button
-                    onClick={handleNext}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md z-10"
-                    aria-label="Next image"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </div>
+                {!botExpand && (
+                  <div className="relative mt-4">
+                    <button
+                      onClick={handlePrevious}
+                      className="absolute left-0 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md z-10"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <ScrollArea className="w-full">
+                      <div className="flex space-x-2 py-2 px-8">
+                        {productDetails?.[0]?.images_url?.map(
+                          (image, index) => (
+                            <>
+                              <button
+                                key={index}
+                                onClick={() => handleImageClick(image, index)}
+                                className={`flex-shrink-0 ${
+                                  index === sliderIndex
+                                    ? "ring-2 ring-blue-500"
+                                    : ""
+                                }`}
+                              >
+                                <Image
+                                  src={image}
+                                  alt={`Product thumbnail ${index + 1}`}
+                                  width={80}
+                                  height={80}
+                                  className="object-cover rounded-md"
+                                />
+                              </button>
+                            </>
+                          )
+                        )}
+                      </div>
+                    </ScrollArea>
+                    <button
+                      onClick={handleNext}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md z-10"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Chat Section */}
-              <div className="pt-2">
-                <div className="p-3 flex items-center justify-start gap-2">
-                  <BotMessageSquare className="w-8 h-8" />
-                  <p className="text-xl font-bold">RetailGenie</p>
+              <div className="pt-2 ">
+                <div className="rounded-ss-md rounded-se-md bg-[#d40029] p-3 flex items-center justify-between gap-2">
+                  <div className="text-white flex items-center justify-start gap-2">
+                    <BotMessageSquare className="w-8 h-8" />
+                    <p className="text-xl font-bold">RetailGenie</p>
+                  </div>
+                  <div>
+                    <Button
+                      variant="ghost"
+                      className="text-white hover:text-white bg-[#d40029] hover:bg-[#d40029]/80"
+                      onClick={() => setBotExpand(!botExpand)}
+                    >
+                      {!botExpand ? (
+                        <Expand className="w-6 h-6" />
+                      ) : (
+                        <Shrink className="w-6 h-6" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 <div className="w-full space-y-4">
-                  <ScrollArea
-                    className="h-[300px] w-full border border-gray-300 rounded-md p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
+                  <motion.div
+                    initial={{ height: 300 }}
+                    animate={{
+                      height: botExpand ? 400 : 300,
+                    }}
+                    transition={{ duration: 0.5 }} // You can adjust the duration here
+                    className={clsx(
+                      "w-full border border-gray-300 rounded-ee-md rounded-es-md p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm overflow-y-scroll scrollbar-none scrollbar-thumb-gray-400 scrollbar-track-gray-200"
+                    )}
                     ref={scrollAreaRef}
                   >
                     {messages.map((message) => (
@@ -634,7 +672,7 @@ export default function Component({ params }) {
                       </div>
                     )}
                     <div ref={messagesEndRef} />
-                  </ScrollArea>
+                  </motion.div>
                   <div className="flex flex-wrap gap-2 mb-2">
                     {buttons?.map((btn, index) => (
                       <Button
@@ -760,7 +798,12 @@ export default function Component({ params }) {
                   </div>
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div
+                  className={clsx("grid gap-4", {
+                    "sm:grid-cols-1": botExpand,
+                    "sm:grid-cols-2": !botExpand,
+                  })}
+                >
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center space-x-2">
