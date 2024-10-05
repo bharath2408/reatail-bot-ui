@@ -209,6 +209,8 @@ export default function Component({ params }) {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      setLoading(false);
+      setIsTyping(false);
     }
   };
 
@@ -320,6 +322,8 @@ export default function Component({ params }) {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      setLoading(false);
+      setIsTyping(false);
     }
   };
 
@@ -385,7 +389,7 @@ export default function Component({ params }) {
     };
 
     fetchStream();
-  }, []);
+  }, [params?.slug]);
 
   // useEffect(() => {
   //   // Initialize the chatbot loader after the page has loaded
