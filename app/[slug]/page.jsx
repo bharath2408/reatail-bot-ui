@@ -418,14 +418,6 @@ export default function Component({ params }) {
 
   return (
     <>
-      <Head>
-        {/* Include external script for chatbot loader */}
-        <script
-          src="https://d3p1ej7da3m9bg.cloudfront.net/lex-web-ui-loader.min.js"
-          async
-        ></script>
-      </Head>
-
       <div className="min-w-screen min-h-screen mt-40 p-4">
         <div className="max-w-7xl mx-auto">
           <div className="lg:flex lg:items-start lg:space-x-8">
@@ -439,10 +431,10 @@ export default function Component({ params }) {
                     zoomSrc={currentImage}
                     alt="Product Image"
                     zoomType="hover"
-                    className="object-contain w-full h-full"
+                    className="object-fill"
                     zoomPreload={true}
                     fullscreenOnMobile={true}
-                    moveType="pan"
+                    // moveType="pan"
                   />
                 </div>
                 <div className="relative mt-4">
