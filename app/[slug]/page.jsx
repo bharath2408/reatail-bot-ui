@@ -32,13 +32,16 @@ import {
   ChevronRight,
   Circle,
   Ellipsis,
+  ExternalLink,
   Heart,
+  Info,
   MapPinIcon,
   MessageCircle,
   Send,
   ShoppingCart,
   Sparkles,
   Star,
+  Tag,
   TruckIcon,
   X,
 } from "lucide-react";
@@ -67,6 +70,7 @@ const predefinedQuestions = [
 
 export default function Component({ params }) {
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [messages, setMessages] = useState([
     {
@@ -423,13 +427,13 @@ export default function Component({ params }) {
   return (
     <>
       <div className="min-w-screen min-h-screen mt-40 p-4">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-8xl mx-auto">
           <div className="lg:flex lg:items-start lg:space-x-8">
             {/* Left column: Images and Chat */}
-            <div className="lg:w-1/2 space-y-6">
+            <div className="lg:w-1/2 space-y-4">
               {/* Product Images */}
-              <div className="xl:aspect-square">
-                <div className="w-full h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
+              <div className="">
+                <div className="w-full h-[300px] sm:h-[400px] lg:h-[400px] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
                   <InnerImageZoom
                     src={currentImage}
                     zoomSrc={currentImage}
@@ -539,50 +543,70 @@ export default function Component({ params }) {
                             {message?.suggestion && (
                               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 p-1">
                                 {message?.suggestion?.map((product, index) => (
-                                  <motion.div
-                                    key={product.item_number}
-                                    whileHover={{ scale: 1.1 }} // Hover effect to enlarge the card
-                                    initial={{ opacity: 0, y: 50 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="flex justify-end"
-                                  >
-                                    <Card className="bg-blue-500 rounded-md shadow-md text-white h-full flex flex-col overflow-hidden">
-                                      <CardHeader className="p-2">
-                                        <CardTitle className="text-xs font-bold truncate ">
+                                  <Card className="bg-white dark:bg-gray-800 rounded-lg shadow-lg h-full flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
+                                    <CardHeader className="p-2 bg-gradient-to-r from-blue-500 to-blue-600">
+                                      <div className="flex justify-between items-start">
+                                        <CardTitle className="text-sm font-bold text-white truncate max-w-full">
                                           {product.name
                                             .charAt(0)
                                             .toUpperCase() +
                                             product.name.slice(1)}
                                         </CardTitle>
-                                      </CardHeader>
-                                      <CardContent className="p-2 pt-0 flex-grow">
-                                        <CardDescription className="text-white text-xs">
-                                          <span className="font-bold">
-                                            Item No :{" "}
-                                          </span>
-                                          {product.item_number}
-                                          <br />
-                                          <p className="text-xs font-medium line-clamp-3 h-auto">
-                                            <span className="font-bold">
-                                              {" "}
-                                              overview :{" "}
-                                            </span>
-                                            {product.overview}
-                                          </p>
+                                      </div>
+                                    </CardHeader>
+                                    <CardContent className="p-2 flex-grow">
+                                      <div className="flex items-center mb-2">
+                                        <Tag className="w-4 h-4 mr-2 text-blue-500" />
+                                        <CardDescription className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                          Item No: {product.item_number}
                                         </CardDescription>
-                                      </CardContent>
-                                      <CardFooter className="p-2 pt-0">
-                                        <Link
-                                          target="_blank"
-                                          href={`/${product.item_number}`}
-                                          className="text-xs text-white hover:text-white transition-colors hover:underline"
+                                      </div>
+                                      <div className="mb-4">
+                                        <div className="flex items-center mb-1">
+                                          <Info className="w-4 h-4 mr-2 text-blue-500" />
+                                          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                            Overview
+                                          </h3>
+                                        </div>
+                                        <p
+                                          className={`text-sm text-gray-700 dark:text-gray-200 ${
+                                            isExpanded ? "" : "line-clamp-3"
+                                          }`}
                                         >
-                                          View Details
+                                          {product?.overview}
+                                        </p>
+                                        {product?.overview?.length > 150 && (
+                                          <Button
+                                            variant="link"
+                                            onClick={() =>
+                                              setIsExpanded(!isExpanded)
+                                            }
+                                            className="mt-1 p-0 h-auto text-blue-500 hover:text-blue-700"
+                                          >
+                                            {isExpanded
+                                              ? "Show less"
+                                              : "Show more"}
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </CardContent>
+                                    <CardFooter className="p-1 bg-gray-50 dark:bg-gray-700">
+                                      <Button
+                                        asChild
+                                        variant="ghost"
+                                        className="w-full justify-between hover:bg-blue-100 dark:hover:bg-blue-900"
+                                      >
+                                        <Link
+                                          href={`/${product.item_number}`}
+                                          target="_blank"
+                                          className="flex items-center"
+                                        >
+                                          <span>View Details</span>
+                                          <ExternalLink className="w-4 h-4 ml-2" />
                                         </Link>
-                                      </CardFooter>
-                                    </Card>
-                                  </motion.div>
+                                      </Button>
+                                    </CardFooter>
+                                  </Card>
                                 ))}
                               </div>
                             )}
@@ -621,7 +645,7 @@ export default function Component({ params }) {
                         onClick={() =>
                           handleSendMessage(btn?.id, btn?.question)
                         }
-                        className="border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-all duration-300 transform hover:scale-105"
+                        className="border-blue-300 text-blue-600 hover:text-blue-600 hover:bg-blue-50 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-all duration-300 transform hover:scale-105"
                       >
                         {btn?.question}
                       </Button>
@@ -646,7 +670,7 @@ export default function Component({ params }) {
                       disabled={loading || isTyping}
                       className="bg-[#d40029] hover:bg-[#d40029] text-white transition-all duration-300 transform hover:scale-105"
                     >
-                      <Send className="h-5 w-5" />
+                      <Send className="h-5 w-5 rotate-45" />
                     </Button>
                   </form>
                 </div>
