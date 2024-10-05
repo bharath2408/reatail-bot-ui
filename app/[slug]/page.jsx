@@ -2,6 +2,14 @@
 import ChatbotBubble from "@/components/ChatbotBubble";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +33,7 @@ import axios from "axios";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import {
+  ArrowLeft,
   ArrowLeftRight,
   ArrowUp,
   BotMessageSquare,
@@ -32,6 +41,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Circle,
+  CircleAlert,
   Ellipsis,
   Expand,
   ExternalLink,
@@ -436,9 +446,14 @@ export default function Component({ params }) {
 
   return (
     <>
-      <div className="min-w-screen min-h-screen mt-40 p-4">
+      <div className="min-w-screen min-h-screen mt-[7%] p-4">
         <div className="max-w-8xl mx-auto">
-          <div className="lg:flex lg:items-start lg:space-x-8">
+          <div
+            className={clsx("lg:flex lg:space-x-8", {
+              "lg:flex-col items-center ": botExpand,
+              "lg:flex-row items-start": !botExpand,
+            })}
+          >
             {/* Left column: Images and Chat */}
             <div
               className={clsx("transition-all duration-500 space-y-4", {
@@ -446,19 +461,120 @@ export default function Component({ params }) {
                 "lg:w-11/12": botExpand,
               })}
             >
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink
+                      href={`${params?.slug}`}
+                      className="w-1/2 truncate"
+                    >
+                      {productDetails?.[0]?.title}
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+              <Link
+                href="/"
+                className="m-0 hover:bg-white hover:underline px-0 py-2 flex items-center justify-start gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to
+              </Link>
               {/* Product Images */}
-              <div className="">
-                <div className="w-full h-[300px] sm:h-[400px] lg:h-[400px] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
-                  <InnerImageZoom
-                    src={currentImage}
-                    zoomSrc={currentImage}
-                    alt="Product Image"
-                    zoomType="hover"
-                    className="object-fill"
-                    zoomPreload={true}
-                    fullscreenOnMobile={true}
-                    // moveType="pan"
-                  />
+              <div>
+                <h1
+                  className={clsx(
+                    "my-2 text-2xl font-bold text-gray-600 dark:text-blue-200",
+                    {
+                      hidden: !botExpand,
+                      visible: botExpand,
+                    }
+                  )}
+                >
+                  {productDetails?.[0]?.title}
+                </h1>
+                <div className={clsx("flex")}>
+                  <div
+                    className={clsx(
+                      " h-[300px] sm:h-[400px] lg:h-[400px] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden",
+                      {
+                        "w-1/2": botExpand,
+                        "w-full": !botExpand,
+                      }
+                    )}
+                  >
+                    <InnerImageZoom
+                      src={currentImage}
+                      zoomSrc={currentImage}
+                      alt="Product Image"
+                      zoomType="hover"
+                      className="object-contain" // Adjust width and height as needed
+                      zoomPreload={true}
+                      fullscreenOnMobile={true}
+                    />
+                  </div>
+                  <div
+                    className={clsx("flex-col gap-4 m-8", {
+                      hidden: !botExpand,
+                      flex: botExpand,
+                    })}
+                  >
+                    <div className="flex flex-row gap-4">
+                      <div className="flex items-center gap-4">
+                        <Label
+                          htmlFor="quantity"
+                          className="text-sm font-medium"
+                        >
+                          Quantity:
+                        </Label>
+                        <Input
+                          id="quantity"
+                          type="number"
+                          min="1"
+                          value={quantity}
+                          onChange={handleQuantityChange}
+                          className="w-20"
+                        />
+                      </div>
+                      <Button className="bg-[#d40029] hover:bg-[#d40029] text-white transition-all duration-300 transform hover:scale-105">
+                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-blue-400 text-blue-600 hover:bg-blue-100 dark:border-blue-500 dark:text-blue-300 dark:hover:bg-blue-900 transition-all duration-300 transform hover:scale-105"
+                      >
+                        <Heart className="mr-2 h-4 w-4" /> Save for Later
+                      </Button>
+                    </div>
+                    <p className="text-sm font-light tracking-wider text-gray-600 dark:text-gray-400">
+                      Item # {productDetails?.[0]?.item_number} | Mfr #{" "}
+                      {productDetails?.[0]?.mfr_number}
+                    </p>
+                    <div className="flex items-center space-x-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < 4
+                              ? "text-[#d40029] fill-[#d40029]"
+                              : "text-gray-300 dark:text-gray-600"
+                          }`}
+                        />
+                      ))}
+                      <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
+                        (4.0)
+                      </span>
+                    </div>
+                    <p className="mt-2 relative text-3xl font-bold mb-2 text-[#121212ed] dark:text-blue-300">
+                      <span className="absolute -top-4 left-0 right-0 text-sm text-[#121212a8]">
+                        Price
+                      </span>{" "}
+                      {productDetails?.[0]?.price}
+                    </p>
+                  </div>
                 </div>
                 {!botExpand && (
                   <div className="relative mt-4">
@@ -514,7 +630,7 @@ export default function Component({ params }) {
                     <BotMessageSquare className="w-8 h-8" />
                     <p className="text-xl font-bold">RetailGenie</p>
                   </div>
-                  <div>
+                  <div className="flex items-center justify-center gap-1">
                     <Button
                       variant="ghost"
                       className="text-white hover:text-white bg-[#d40029] hover:bg-[#d40029]/80"
@@ -720,9 +836,21 @@ export default function Component({ params }) {
 
             {/* Right column: Product Details and Specifications */}
             {productDetails?.map((product, index) => (
-              <div className="lg:w-1/2 mt-8 lg:mt-0 space-y-6">
+              <div
+                className={clsx("space-y-6", {
+                  "lg:w-1/2 mt-8 lg:mt-0": !botExpand,
+                  "lg:w-11/12 m-8": botExpand,
+                })}
+              >
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-600 dark:text-blue-200">
+                  <h1
+                    className={clsx(
+                      "text-2xl font-bold text-gray-600 dark:text-blue-200",
+                      {
+                        hidden: botExpand,
+                      }
+                    )}
+                  >
                     {product?.title}
                   </h1>
                   <p className="text-sm font-light tracking-wider text-gray-600 dark:text-gray-400">
@@ -752,10 +880,15 @@ export default function Component({ params }) {
                     </span>{" "}
                     {product?.price}
                   </p>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  <p className="text-gray-600 text-justify dark:text-gray-300 mb-4">
                     {product?.overview}
                   </p>
-                  <div className="flex flex-wrap gap-4 mb-4">
+                  <div
+                    className={clsx("flex-wrap gap-4 mb-4", {
+                      hidden: botExpand,
+                      flex: !botExpand,
+                    })}
+                  >
                     <div className="flex items-center gap-4">
                       <Label htmlFor="quantity" className="text-sm font-medium">
                         Quantity:
@@ -803,8 +936,8 @@ export default function Component({ params }) {
 
                 <div
                   className={clsx("grid gap-4", {
-                    "sm:grid-cols-1": botExpand,
-                    "sm:grid-cols-2": !botExpand,
+                    "sm:grid-cols-2": botExpand,
+                    "grid-cols-2": !botExpand,
                   })}
                 >
                   <Card>
