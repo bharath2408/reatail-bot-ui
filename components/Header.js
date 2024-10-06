@@ -8,8 +8,8 @@ const Header = () => {
       <header className="shadow-lg bg-white fixed top-0 right-0 left-0 z-50">
         {/* Logo */}
         <div className="p-2 flex flex-col sm:flex-row items-center justify-between">
-          <div className="flex items-center flex-grow sm:flex-grow-0 text-black text-sm p-2 font-bold">
-            Logo
+          <div className="flex text-[#d40029] italic items-center flex-grow sm:flex-grow-0 text-xl p-2 font-bold">
+            ACE
           </div>
 
           {/* Desktop Search */}
